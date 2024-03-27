@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- <script src="vue.js"></script> -->
+	<script src="myVue.js"></script>
+	<title>Document</title>
+</head>
+<body>
+	
+</body>
+</html>
+
+<script>
+	const vm = new Vue({
+		data:{
+			name:"黄睿",
+			class:{
+				number:"NO.116",
+				level:"三年级",
+				info:{
+					people_number:20,
+					name:'朝阳班'
+				}
+			},
+			age:18
+		},
+		watch:{
+			// name(){
+			// 	console.log("name发生了变化1")
+			// },
+			// age(){
+			// 	console.log("age发生变化了")
+			// }
+		}
+	})
+	
+	setTimeout(()=>{
+		vm.$watch('name',()=>{
+			console.log("发生了变化2")
+		})
+	},2000)
+
+</script>
