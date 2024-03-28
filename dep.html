@@ -14,6 +14,81 @@
 </html>
 
 <script>
+	function Dep(params) {	
+	    this.subs = []
+	
+	    this.add = () => {
+	        if(this.target){
+	            this.subs.push(this.target)
+	        }
+	    }
+	
+	    this.notify = () =>{
+	        this.subs.forEach((wathc)=>{
+				wathc.run()
+			})
+	    }
+	}
+	Dep.__proto__.target = null
+	
+	function Wather(obj,key,cb) {
+	    this.obj = obj
+	    this.key = key
+	    this.cb = cb
+	    this.get = () => {
+	        dep.target = this
+	        obj[key]
+	        dep.target = null
+	    }
+	    this.get()
+	    this.run= () => {
+	        this.cb()
+	    }
+	    
+	}
+	function defineReactive(obj,key,value){
+	    let dep = new Dep()
+	    Object.defineProperty(obj,key,{
+	        get(){
+	            dep.add()
+	            return value
+	        },
+	        set(val){
+	            if(val === value){
+	                return
+	            }
+	            dep.notify()
+	            value = val
+	        }
+	    })
+	}
+	
+	let data = {
+		name:"黄睿",
+		class:{
+			level:"大班",
+			number:50,
+			techer:{
+				name:"王老师",
+				name2:"李老师"
+			}
+		}
+	}
+	
+	function observe(data){
+		let type = Object.prototype.toString.call(data)
+		if(type != ['object Object'] && type != ['object Array']){
+			return
+		}
+		Observer(data)
+	}
+	
+	function Observer(data){
+		defineReactive(data)
+	}
+</script>
+
+<script>
 	const vm = new Vue({
 		data:{
 			name:"黄睿",
@@ -37,10 +112,20 @@
 		}
 	})
 	
-	setTimeout(()=>{
-		vm.$watch('name',()=>{
-			console.log("发生了变化2")
-		})
-	},2000)
+	// vm.$watch('name',()=>{
+	// 	console.log("发生了变化2")
+	// })
+	// vm.$watch('name',()=>{
+	// 	console.log("发生了变化2")
+	// })
+	// vm.$watch('name',()=>{
+	// 	console.log("发生了变化2")
+	// })
+	
+	// setTimeout(()=>{
+	// 	vm.$watch('name',()=>{
+	// 		console.log("发生了变化2")
+	// 	})
+	// },2000)
 
 </script>
