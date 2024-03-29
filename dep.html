@@ -13,80 +13,6 @@
 </body>
 </html>
 
-<script>
-	function Dep(params) {	
-	    this.subs = []
-	
-	    this.add = () => {
-	        if(this.target){
-	            this.subs.push(this.target)
-	        }
-	    }
-	
-	    this.notify = () =>{
-	        this.subs.forEach((wathc)=>{
-				wathc.run()
-			})
-	    }
-	}
-	Dep.__proto__.target = null
-	
-	function Wather(obj,key,cb) {
-	    this.obj = obj
-	    this.key = key
-	    this.cb = cb
-	    this.get = () => {
-	        dep.target = this
-	        obj[key]
-	        dep.target = null
-	    }
-	    this.get()
-	    this.run= () => {
-	        this.cb()
-	    }
-	    
-	}
-	function defineReactive(obj,key,value){
-	    let dep = new Dep()
-	    Object.defineProperty(obj,key,{
-	        get(){
-	            dep.add()
-	            return value
-	        },
-	        set(val){
-	            if(val === value){
-	                return
-	            }
-	            dep.notify()
-	            value = val
-	        }
-	    })
-	}
-	
-	let data = {
-		name:"黄睿",
-		class:{
-			level:"大班",
-			number:50,
-			techer:{
-				name:"王老师",
-				name2:"李老师"
-			}
-		}
-	}
-	
-	function observe(data){
-		let type = Object.prototype.toString.call(data)
-		if(type != ['object Object'] && type != ['object Array']){
-			return
-		}
-		Observer(data)
-	}
-	
-	function Observer(data){
-		defineReactive(data)
-	}
-</script>
 
 <script>
 	const vm = new Vue({
@@ -100,32 +26,190 @@
 					name:'朝阳班'
 				}
 			},
-			age:18
+			age:18,
+			list:['吃饭','看书']
 		},
 		watch:{
-			// name(){
-			// 	console.log("name发生了变化1")
-			// },
-			// age(){
-			// 	console.log("age发生变化了")
-			// }
+			name(){
+				this.age = 5
+				console.log("name发生了变化")
+			},
+			class(){
+				console.log("班级属性发生了变化")
+			},
+			list(){
+				console.log('list进行了改变')
+			}
 		}
 	})
 	
+	vm.name = '刘祉悦'
+	console.log(vm.age)
+	// vm.class.aaa = 50
+	vm.$set(vm.class,'age',50)
+	
+	vm.list.push(2)
 	// vm.$watch('name',()=>{
 	// 	console.log("发生了变化2")
 	// })
-	// vm.$watch('name',()=>{
-	// 	console.log("发生了变化2")
-	// })
-	// vm.$watch('name',()=>{
-	// 	console.log("发生了变化2")
+
+</script>
+
+
+
+<script>
+	// function Dep(params) {	
+		
+	//     this.subs = []
+	
+	//     this.add = function(){
+	//         if(Dep.target){
+	//             this.subs.push(Dep.target)
+	//         }
+	//     }
+	
+	//     this.notify =function(){
+	// 		console.log("修改被执行了",this.subs)
+	//         this.subs.forEach((wathc)=>{
+	// 			wathc.run()
+	// 		})
+	//     }
+	// }
+	// Dep.target = null
+	
+	// function Wather(obj,key,cb) {
+	//     this.obj = obj
+	//     this.key = key
+	//     this.cb = cb
+	//     this.get = function(){
+	// 		Dep.target = this
+	// 		obj[key]
+	// 		Dep.target = null
+	// 	}
+	//     this.get()
+	//     this.run= function(){
+	//         this.cb()
+	//     }
+	    
+	// }
+	// function defineReactive(obj,key,value){
+	// 	observe(obj[key])
+	//     let dep = new Dep()
+	//     Object.defineProperty(obj,key,{
+	//         get(){
+	// 			console.log(`${key}我被访问了`)
+	//             dep.add()
+	//             return value
+	//         },
+	//         set(val){
+	//             if(val === value){
+	//                 return
+	//             }
+	//             dep.notify()
+	//             value = val
+	//         }
+	//     })
+	// }
+	
+	// let data = {
+	// 	name:"黄睿",
+	// 	class:{
+	// 		level:"大班",
+	// 		number:50,
+	// 		techer:{
+	// 			name:"王老师",
+	// 			name2:"李老师"
+	// 		}
+	// 	}
+	// }
+	// observe(data)
+	
+	// function observe(data){
+	// 	let type = Object.prototype.toString.call(data)
+	// 	if(type !== '[object Object]' && type !== '[object Array]'){
+	// 		return
+	// 	}
+	// 	Observer(data)
+	// }
+	
+	// function Observer(data){
+	// 	let keys = Object.keys(data)
+	// 	for (let i = 0 ; i < keys.length ; i ++) {
+	// 		defineReactive(data,keys[i],data[keys[i]])
+	// 	}
+	// }
+	
+	// new Wather(data,"name",()=>{
+	// 	console.log("name被修改后执行函数")
 	// })
 	
-	// setTimeout(()=>{
-	// 	vm.$watch('name',()=>{
-	// 		console.log("发生了变化2")
-	// 	})
-	// },2000)
+	// new Wather(data,"name",()=>{
+	// 	console.log("name被修改后执行函数2")
+	// })
+</script>
 
+
+<script>
+	// 简易版的Dep Watcher 异步更新类实现
+	// class Dep{
+	//     static target = null
+	//     constructor(){
+	//         this.subs = []
+	//     }
+	//     add(){
+	//         if(Dep.target){
+	//             this.subs.push(Dep.target)
+	//         }
+	//     }
+	
+	//     notify(){
+	//         this.subs.forEach((watch)=>{
+	//             watch.run()
+	//         })
+	//     }
+	// }
+	
+	// let dep  = new Dep()
+	// let watcherId = 0
+	// let watcherQueue = []
+	// class Watcher{
+	//     constructor(obj,key,cb){
+	//         this.obj = obj
+	//         this.key = key
+	//         this.cb = cb
+	//         this.id = ++watcherId
+	//         this.get()
+	//     }
+	
+	//     get(){
+	//         Dep.target = this
+	//         dep.add()
+	//         Dep.target = this
+	//     }
+	
+	//     run(){
+	//         if(watcherQueue.indexOf(this.id) !== -1){
+	//             return
+	//         }
+	//         watcherQueue.push(this.id)
+	//          this.cb()
+	//     }
+	// }
+	
+	// let obj  = {
+	//     name:"芜湖"
+	// }
+	
+	//  new Watcher(obj,'name',()=>{
+	//     console.log('芜湖')
+	// })
+	
+	//  new Watcher(obj,'name',()=>{
+	//     console.log('芜湖2')
+	// })
+	// dep.notify()
+	
+	// dep.notify()
+	
+	// dep.notify()
 </script>
