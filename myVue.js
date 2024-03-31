@@ -4,6 +4,9 @@
 			this.$options =options
 			this._data = options.data
 			this.initData()
+			this.initComputed()
+			this.initWtch()
+			
 		}
 		initData(){
 			
@@ -24,7 +27,41 @@
 			}
 			
 			observe(data)
-			this.initWtch()
+		}
+		
+		initComputed(){
+			let computed = this.$options.computed
+			if(computed){
+				let keys = Object.keys(computed)
+				for(let i = 0 ; i < keys.length; i ++){
+					const watcher =  new Watcher(this,computed[keys[i]],function(){
+						
+					},{lazy:true})
+					Object.defineProperty(this,keys[i],{
+						enumerable:true,
+						configurable:true,
+						get:function computedGetter(){
+							// console.log('我是computed',watcher.dirty)
+							if(watcher.dirty){
+								watcher.get()
+								watcher.dirty = false
+							}
+							// watcher.exp.call(watcher.vm)
+							if(Dep.target){
+								// 1号watcher收集到的dep 把这些dep一个个拿出来通知他们收集 现在任然在台上的2号watcher
+								for(let j = 0 ; j < watcher.deps; j ++){
+									watcher.deps[j].depend()
+								} 
+							}
+							
+							return watcher.value
+						},
+						set:function computedSetter(){
+							console.warn('计算属性不可赋值')
+						}
+					})
+				}
+			}
 		}
 		
 		initWtch(){
@@ -48,6 +85,7 @@
 			defineReactive(target,key,value)
 			target.__ob__.dep.notify()
 		}
+		
 	}
 	
 	function observe(data){
@@ -61,10 +99,10 @@
 		return new Observer(data)
 	}
 	
-	// 递归对象属性转化成响应式   对象 属性 值
+	// 递归对象属性/对象 转化成响应式   对象 属性 值
 	function defineReactive(obj,key,value){
 		let childOb = observe(obj[key])
-		
+		// console.log('childOb',key,childOb)
 		let dep = new Dep()
 		// console.log('dep',dep)
 		Object.defineProperty(obj,key,{
@@ -90,15 +128,18 @@
 			}
 		})
 		
-		setTimeout(()=>{
-			// console.log(dep)
-		})
 	}
 	
 	class Observer{
 		constructor(data){
+			// console.log('data',data)
 			this.dep = new Dep()
-			this.walk(data)
+			if(Array.isArray(data)){
+				data.__proto__ = ArrayMethods
+				this.observeArray(data)
+			}else{
+				this.walk(data)
+			}
 			Object.defineProperty(data,"__ob__",{
 				value:this,
 				enumerable:false,
@@ -106,25 +147,35 @@
 				writable:true
 			})
 		}
-		
+		// 对象属性转成响应式
 		walk(data){
 			let keys = Object.keys(data)
 			for(let i = 0 ; i < keys.length ; i++){
 				defineReactive(data,keys[i],data[keys[i]])
 			}
 		}
+		// 数组内属性转成响应式
+		observeArray(arr){
+			for(let i = 0 ; i < arr.length ; i ++){
+				observe(arr[i])
+			}
+		}
 	}
 	
+	let targetStack = []
 	class Dep{
 		constructor(){
 			this.subs = []
+		}
+		addSub(watcher){
+			this.subs.push(watcher)
 		}
 		depend(){
 			// console.log(Dep.target)
 			// console.log("Dep.target",Dep.target)
 			// console.log('this.subs',this.subs)
 			if(Dep.target){
-				this.subs.push(Dep.target)
+				Dep.target.addDep(this)
 			}
 		}
 		notify(){
@@ -132,7 +183,7 @@
 			// console.log("wathc",this.subs)
 			// 以此执行回调函数
 			this.subs.forEach((wathc)=>{
-				wathc.run()
+				wathc.update()
 			})
 		}
 	}
@@ -141,22 +192,54 @@
 	// watcher队列
 	let watcherQueue = []
 	class Watcher{
-		constructor(vm,exp,cb){
+		constructor(vm,exp,cb,options = {}){
 			// console.log(vm,exp,cb)
+			this.dirty = this.lazy = !!options.lazy
+			// console.log('options',this.dirty)
 			this.vm = vm
 			this.exp = exp
 			this.cb = cb
 			this.id = ++watcherId
-			this.get()
+			this.deps = []
+			if(!this.lazy){
+				this.get()
+			}
+		}
+		addDep(dep){
+			//dep实例有可能被收集过 如果收集过 则直接返回
+			if(this.deps.indexOf(dep) !== -1){
+				return
+			}
+			
+			this.deps.push(dep)
+			dep.addSub(this)
 		}
 		// 求值
 		get(){
+			targetStack.push(this)
 			Dep.target = this
-			this.vm[this.exp]
-			Dep.target = null
+			if(typeof this.exp === 'function'){
+				this.value = this.exp.call(this.vm)
+			}else{
+				this.value = this.vm[this.exp]
+			}
+			targetStack.pop()
+			if(targetStack.length > 0){
+				// 将栈顶的watcher拿出来放到 "舞台"
+				Dep.target = targetStack[targetStack.length - 1]
+			}else{
+				Dep.target = null
+			}
 		}
-		
+		update(){
+			if(this.lazy){
+				this.dirty = true
+			}else{
+				this.run()
+			}
+		}
 		run(){
+			
 			// 如果已经
 			if(watcherQueue.indexOf(this.id) !== -1){
 				return
@@ -165,12 +248,32 @@
 			
 			let index = watcherQueue.length-1
 			Promise.resolve().then(()=>{
+				this.get()
 				this.cb.call(this.vm)
 				watcherQueue.splice(index,1)
 			})
 		}
 	}
 	
+	const ArrayMethods = {}
+	ArrayMethods.__proto__ = Array.prototype
+	const methods = [
+		'push',
+		'pop',
+		// 其他需要拦截的方法
+	]
+	
+	methods.forEach(method => {
+		ArrayMethods[method] = function(...args){
+			// 处理push的对象 进行响应式转换
+			if(method === 'push'){
+				this.__ob__.observeArray(args)
+			}
+			const reslut = Array.prototype[method].apply(this,args)
+			this.__ob__.dep.notify()
+			return reslut
+		}
+	})
 	
 	window.Vue = Vue
 })(window)

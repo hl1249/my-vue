@@ -15,6 +15,7 @@
 
 
 <script>
+	
 	const vm = new Vue({
 		data:{
 			name:"黄睿",
@@ -27,7 +28,12 @@
 				}
 			},
 			age:18,
-			list:['吃饭','看书']
+			list:['吃饭','看书',{name:'我是list数组'}],
+			a:5,
+			b:8,
+			person:{
+				name:"张三"
+			}
 		},
 		watch:{
 			name(){
@@ -39,20 +45,46 @@
 			},
 			list(){
 				console.log('list进行了改变')
+			},
+			x(){ //二号watcher
+				console.log('x监听')
+			}
+		},
+		computed:{
+			x(){ //一号watcher
+				console.log("x运算")
+				return JSON.stringify(this.person)
 			}
 		}
 	})
 	
-	vm.name = '刘祉悦'
-	console.log(vm.age)
+	// vm.name = '刘祉悦'
+	// console.log(vm.age)
 	// vm.class.aaa = 50
-	vm.$set(vm.class,'age',50)
+	// vm.$set(vm.class,'age',50)
+	// vm.x = 2
+	// vm.list.push(2)
+	// vm.list.push({sex:"男"})
 	
-	vm.list.push(2)
+	
 	// vm.$watch('name',()=>{
 	// 	console.log("发生了变化2")
 	// })
-
+	
+	// 拦截数组的方法 并切不影响数组原型上的方法
+	// let a  = []
+	// let protoObj = {
+	// 	push:function(value){
+	// 		Array.prototype.push.call(this,value)
+	// 		console.log(123)
+	// 	}
+	// }
+	// a.__proto__ = protoObj
+	// protoObj.__proto__ = Array.prototype
+	
+	// a.push(1)
+	// console.log(vm.list)
+	
 </script>
 
 
